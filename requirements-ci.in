@@ -1,0 +1,12 @@
+# The original Python 3.8 tutorial API surface is intentional.
+ncclient==0.6.19
+netmiko==4.4.0
+pysnmp==4.4.12
+pyasn1==0.4.8
+paramiko==3.5.1
+cryptography==45.0.7
+requests==2.32.4
+xmltodict==0.14.2
+PyYAML==6.0.3
+pytest==8.3.5
+ruff==0.12.12

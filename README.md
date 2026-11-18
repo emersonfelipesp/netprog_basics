@@ -2,6 +2,54 @@
 
 Code, Examples, and Resources for the Network Programmability Basics Video Course
 
+## Automatic source checks and live tutorial exercises
+
+Automatic CI retains Python **3.8.20** and all seven original workflow
+producers: Part 1 arithmetic, Part 2 shapes and time, and Part 3 NETCONF,
+CLI, SNMP, RESTCONF and data-format examples. The authored examples, their
+original requirements and data files remain unchanged.
+
+**Automatic external network execution is replaced by offline source-contract
+checks. These checks do not qualify a live network, device, sandbox or VPN.**
+The original examples still describe manual tutorial exercises. Their historical
+sandbox addresses, credentials, TLS settings and library APIs require a separate
+environment review before live use. CI does not establish that those settings
+remain valid or safe for a current network.
+
+The offline profile imports compatible real dependencies and executes the
+original scripts. Narrow fixtures replace NETCONF connection, CLI connection,
+REST GET and SNMP GET entry functions. The real SNMP numeric-address resolver
+uses a fixture that validates an IPv4 address and port 161 without DNS. A separate
+socket guard rejects DNS and TCP/UDP sends, including negative tests that prove
+accidental network access fails. Assertions check request shape, parsed results,
+the SNMP success and both error branches, deterministic arithmetic, timestamp
+arithmetic, and the original XML, JSON, YAML and CSV exercises. No unrelated
+device configuration or application-hosting example runs automatically.
+
+Each of the seven producers has an explicit CI step and JUnit receipt. The job
+also records the actual interpreter, installed dependencies and all tracked file
+digests before and after execution. Any failed producer fails the single complete
+job. Later producers and evidence collection still run after a failure. Only
+obsolete runs within one pull request can cancel each other; branch runs remain
+independent. The workflow admits only push and pull-request events
+for `master`, has read-only repository permission, and publishes test artifacts.
+It contains no deployment, release or package publisher.
+
+For an isolated local check with an existing Python 3.8.20 interpreter:
+
+```sh
+python3.8 -m venv .venv
+.venv/bin/python -m pip install --require-hashes -r requirements-ci.txt
+.venv/bin/python -m ruff check tests
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -v tests
+```
+
+The CI-only hash-locked dependencies preserve the tutorial APIs on Python 3.8.
+They do not replace the original lesson requirements or claim production
+dependency support. Regenerate the lock in an owned Python 3.8.20 environment
+with `uv pip compile --python .venv/bin/python --no-header --generate-hashes
+--output-file requirements-ci.txt requirements-ci.in`, then rerun all checks.
+
 ## Table of Contents
 * [General Workstation Setup](readme_resources/workstation_setup.md)
     * [Operating System Considerations](readme_resources/workstation_setup.md#operating-system-considerations)
