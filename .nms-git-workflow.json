@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "syntax": [
+    {"kind": "python-compileall", "paths": ["tests"]}
+  ],
+  "lint": [
+    {"kind": "ruff-check", "paths": ["tests"]}
+  ],
+  "test": [
+    {"kind": "pytest", "paths": ["tests"]}
+  ]
+}
