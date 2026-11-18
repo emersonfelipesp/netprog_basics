@@ -18,63 +18,69 @@ jobs:
     name: Python 3.8 offline source contracts
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    env:
+      UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
+      UV_PYTHON_INSTALL_DIR: ${{ github.workspace }}/.cache/python
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - name: Set up Python 3.8.20
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+      - name: Install pinned runtime manager
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78
         with:
-          python-version: '3.8.20'
+          version: '0.12.5'
+          enable-cache: false
+      - name: Create private Python 3.8.20 runtime
+        run: uv venv --python 3.8.20 .venv
       - name: Record interpreter and immutable source
         run: |
           mkdir -p ci-evidence
           git ls-files -z | xargs -0 sha256sum > ci-evidence/source-before.txt
-          python --version > ci-evidence/python-version.txt
+          .venv/bin/python --version > ci-evidence/python-version.txt
       - name: Install hash-locked CI dependencies
         run: |
-          python -m pip install --require-hashes -r requirements-ci.txt
-          python -m pip check
-          python -m pip freeze > ci-evidence/installed.txt
+          uv pip sync --python .venv/bin/python --require-hashes requirements-ci.txt
+          uv pip check --python .venv/bin/python
+          uv pip freeze --python .venv/bin/python > ci-evidence/installed.txt
       - name: Lint new contract tests
-        run: python -m ruff check tests
+        run: .venv/bin/python -m ruff check tests
       - name: Verify exact runtime and fail-closed network guard
         run: |
           env -i PATH="$PATH" LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 \
-            python -m pytest -v tests -k 'required_python38 or network_guard' --junitxml=ci-evidence/guard.xml
+            .venv/bin/python -m pytest -v tests -k 'required_python38 or network_guard' --junitxml=ci-evidence/guard.xml
       - name: Part 1 arithmetic and invalid input
         if: always()
         run: |
           env -i PATH="$PATH" LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 \
-            python -m pytest -v tests -k "part1_" --junitxml=ci-evidence/producer-1.xml
+            .venv/bin/python -m pytest -v tests -k "part1_" --junitxml=ci-evidence/producer-1.xml
       - name: Part 2 shapes and time
         if: always()
         run: |
           env -i PATH="$PATH" LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 \
-            python -m pytest -v tests -k "part2_" --junitxml=ci-evidence/producer-2.xml
+            .venv/bin/python -m pytest -v tests -k "part2_" --junitxml=ci-evidence/producer-2.xml
       - name: Part 3 NETCONF contract
         if: always()
         run: |
           env -i PATH="$PATH" LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 \
-            python -m pytest -v tests -k "ncclient_producer" --junitxml=ci-evidence/producer-3.xml
+            .venv/bin/python -m pytest -v tests -k "ncclient_producer" --junitxml=ci-evidence/producer-3.xml
       - name: Part 3 CLI contract
         if: always()
         run: |
           env -i PATH="$PATH" LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 \
-            python -m pytest -v tests -k "netmiko_producer" --junitxml=ci-evidence/producer-4.xml
+            .venv/bin/python -m pytest -v tests -k "netmiko_producer" --junitxml=ci-evidence/producer-4.xml
       - name: Part 3 SNMP success and error contracts
         if: always()
         run: |
           env -i PATH="$PATH" LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 \
-            python -m pytest -v tests -k "pysnmp_producer" --junitxml=ci-evidence/producer-5.xml
+            .venv/bin/python -m pytest -v tests -k "pysnmp_producer" --junitxml=ci-evidence/producer-5.xml
       - name: Part 3 RESTCONF contract
         if: always()
         run: |
           env -i PATH="$PATH" LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 \
-            python -m pytest -v tests -k "requests_producer" --junitxml=ci-evidence/producer-6.xml
+            .venv/bin/python -m pytest -v tests -k "requests_producer" --junitxml=ci-evidence/producer-6.xml
       - name: Part 3 authored data formats
         if: always()
         run: |
           env -i PATH="$PATH" LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 \
-            python -m pytest -v tests -k "data_library_producer" --junitxml=ci-evidence/producer-7.xml
+            .venv/bin/python -m pytest -v tests -k "data_library_producer" --junitxml=ci-evidence/producer-7.xml
       - name: Verify immutable source after every producer
         if: always()
         run: |
